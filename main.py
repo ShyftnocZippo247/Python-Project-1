@@ -1,10 +1,10 @@
 from rich.console import Console
 from rich.table import Table
 from rich.prompt import Prompt
-from bank_operator import bank_operator
+from bank_operator import BankOperator
 
 console = Console()
-
+bank_operator = BankOperator()
 
 def menu():
     while True:

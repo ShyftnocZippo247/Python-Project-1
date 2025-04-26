@@ -1,74 +1,107 @@
-from account.user import User
-from account.bank_account import BankAccount, SavingsAccount, CurrentAccount, StudentAccount
+import re
 
-users = []
+class BankOperator:
+    def __init__(self):
+        self.users = []
+        self.accounts = []
+        self.transactions = []
 
-def create_user():
-    name = input("Enter name: ")
-    email = input("Enter email: ")
-    user = User(name, email)
-    if not user.is_valid_email(email):
-        print("Email is invalid!")
-    users.append(user)
-    print(f"User {name} created.\n")
+    def create_user(self):
+        email = input("Enter email: ")
+        if not self.is_valid_email(email):
+            print("Invalid email address!")
+            return
+        
+        name = input("Enter name: ")
+        self.users.append({"email": email, "name": name})
+        print(f"User {name} created successfully.")
 
-def list_users():
-    for i, user in enumerate(users):
-        print(f"{i+1}. {user}")
+    def is_valid_email(self, email):
+        pattern = r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$"
+        return re.match(pattern, email) is not None
 
-def create_account():
-    list_users()
-    idx = int(input("Select user number: ")) - 1
-    print("Account Type:")
-    print("1. Savings Account")
-    print("2. Students Account")
-    print("3. Current Account")
-    account_choice = int(input("Enter your choice (1, 2, 3): "))
-    amount = float(input("Enter initial deposit: "))
+    def list_users(self):
+        if not self.users:
+            print("No users available.")
+            return
+        
+        for i, user in enumerate(self.users):
+            print(f"{i + 1}. {user['name']} - {user['email']}")
 
-    if account_choice == 1:
-        account = SavingsAccount(amount)
-    elif account_choice == 2:
-        account = StudentAccount(amount)
-    elif account_choice == 3:
-        account = CurrentAccount(amount)
-    else:
-        print("Invalid choice!")
-        account = BankAccount(amount)
+    def create_account(self):
+        if not self.users:
+            print("No users available. Please create a user first.")
+            return
 
-    users[idx].add_account(account)
-    print(f"{account.get_account_type()} added!\n")
+        self.list_users()
 
-def deposit_money():
-    list_users()
-    idx = int(input("Select user: ")) - 1
-    user = users[idx]
-    for i, acc in enumerate(user.accounts):
-        print(f"{i+1}. Balance: Rs. {acc.get_balance()}")
-    acc_idx = int(input("Select account: ")) - 1
-    amount = float(input("Enter amount to deposit: "))  # Fixed bug
-    user.accounts[acc_idx].deposit(amount)
+        user_index = int(input("Select a user by number: ")) - 1
+        if user_index < 0 or user_index >= len(self.users):
+            print("Invalid user selection.\n")
+            return
 
-def withdraw_money():
-    list_users()
-    idx = int(input("Select user: ")) - 1
-    user = users[idx]
-    for i, acc in enumerate(user.accounts):
-        print(f"{i+1}. Balance: Rs. {acc.get_balance()}")
-    acc_idx = int(input("Select account: ")) - 1
-    amount = float(input("Enter amount to withdraw: "))
-    try:
-        user.accounts[acc_idx].withdraw(amount)
-        print("Withdrawal successful.\n")
-    except ValueError as e:
-        print(f"Error: {e}\n")
+        account_type = input("Enter account type (Savings/Checking): ")
+        if account_type not in ["Savings", "Checking"]:
+            print("Invalid account type!")
+            return
 
-def view_transactions():
-    list_users()
-    idx = int(input("Select user: ")) - 1
-    user = users[idx]
-    for i, acc in enumerate(user.accounts):
-        print(f"\n{acc.get_account_type()} {i+1} - Balance: Rs. {acc.get_balance()}")
-        for tx in acc.get_transaction_history():
-            print(tx)
+        user = self.users[user_index]
+        account = {"user": user, "type": account_type, "balance": 0.0}
+        self.accounts.append(account)
+        print(f"{account_type} account created for {user['name']}.")
 
+    def deposit_money(self):
+        if not self.accounts:
+            print("No accounts available to deposit into.")
+            return
+        
+        self.list_accounts()
+
+        account_index = int(input("Select account by number: ")) - 1
+        if account_index < 0 or account_index >= len(self.accounts):
+            print("Invalid account selection.\n")
+            return
+        
+        amount = float(input("Enter deposit amount: "))
+        self.accounts[account_index]["balance"] += amount
+        self.transactions.append(f"Deposited ${amount} to {self.accounts[account_index]['user']['name']}'s account.")
+        print(f"${amount} deposited successfully.")
+
+    def withdraw_money(self):
+        if not self.accounts:
+            print("No accounts available to withdraw from.")
+            return
+        
+        self.list_accounts()
+
+        account_index = int(input("Select account by number: ")) - 1
+        if account_index < 0 or account_index >= len(self.accounts):
+            print("Invalid account selection.\n")
+            return
+        
+        amount = float(input("Enter withdrawal amount: "))
+        account = self.accounts[account_index]
+        
+        if account["balance"] < amount:
+            print("Insufficient funds!")
+            return
+        
+        account["balance"] -= amount
+        self.transactions.append(f"Withdrew ${amount} from {account['user']['name']}'s account.")
+        print(f"${amount} withdrawn successfully.")
+
+    def list_accounts(self):
+        if not self.accounts:
+            print("No accounts available.")
+            return
+        
+        for i, account in enumerate(self.accounts):
+            print(f"{i + 1}. {account['user']['name']} - {account['type']} - Balance: ${account['balance']}")
+
+    def view_transactions(self):
+        if not self.transactions:
+            print("No transactions yet.")
+            return
+
+        for transaction in self.transactions:
+            print(transaction)
